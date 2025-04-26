@@ -57,7 +57,7 @@ app.on('activate', () => {
     }
 });
 
-// IPC handlers para operaciones con la base de datos
+// operaciones con la base de datos
 ipcMain.handle('login', async (event, { username, password }) => {
     const connection = createConnection();
     
@@ -680,12 +680,11 @@ ipcMain.handle('get-report-by-id', async (event, reportId) => {
 
         // Filtrar movimientos relacionados con el reporte
         const relatedMovements = movementRows.filter(movement => {
-            // Aquí puedes definir la lógica para filtrar los movimientos
-            // Por ejemplo, si el movimiento tiene un campo que se relaciona con el reporte
-            return movement.someField === report.someField; // Ajusta según tu lógica
+            
+            return movement.someField === report.someField; 
         });
 
-        return { report, movements: relatedMovements }; // Devuelve el reporte y sus movimientos
+        return { report, movements: relatedMovements }; 
     } catch (error) {
         console.error('Error en get-report-by-id:', error);
         throw new Error('Error al obtener el reporte');

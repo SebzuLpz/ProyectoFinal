@@ -527,8 +527,8 @@ span {
 
 
 .btn-view-report {
-    background: none; /* Sin fondo */
-    border: none; /* Sin borde */
+    background: none; 
+    border: none;
     cursor: pointer; 
 
 }
