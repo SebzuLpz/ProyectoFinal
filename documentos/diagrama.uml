@@ -1,0 +1,49 @@
+@startuml Ritmichell_Sistema_Inventarios
+
+' Definición de actores
+actor "Administrador" as Admin
+actor "Usuario Regular" as User
+
+' Paquete de Autenticación
+rectangle "Autenticación" {
+  usecase "Iniciar Sesión" as UC1
+  usecase "Cerrar Sesión" as UC2
+}
+
+' Paquete de Gestión de Inventario
+rectangle "Gestión de Inventario" {
+  usecase "Visualizar Inventario" as UC3
+  usecase "Filtrar Productos" as UC4
+  usecase "Actualizar Stock" as UC5
+  usecase "Agregar Nuevo Producto" as UC6
+  usecase "Eliminar Producto" as UC7
+}
+
+' Paquete de Control de Costos
+rectangle "Control de Costos" {
+  usecase "Registrar Costo" as UC8
+  usecase "Visualizar Historial de Costos" as UC9
+  usecase "Filtrar Registros de Costos" as UC10
+}
+
+' Relaciones entre casos de uso
+UC3 <.. UC4 : <<extend>>
+UC3 <.. UC5 : <<extend>>
+
+' Relaciones de herencia entre actores
+User <|-- Admin
+
+' Relaciones entre actores y casos de uso
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC8
+User --> UC9
+User --> UC10
+
+Admin --> UC6
+Admin --> UC7
+
+@enduml
