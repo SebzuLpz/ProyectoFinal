@@ -100,6 +100,11 @@
         </button>
     </div>
     <h2>Inventario de Productos</h2>
+    <br>
+    <div class="search-bar">
+        <input type="text" id="search-input" class="form-control" placeholder="Buscar Colegio o Producto">
+        <div id="suggestions-container" class="suggestions hidden"></div>
+    </div>
     <div class="products-table">
         <table>
             <thead>
@@ -116,78 +121,67 @@
     </div>
 </div>
 
-    <div id="cost-control-container" class="container hidden scrollable-container">
-        <div class="menu-bar">
-            <div class="left-menu">
-                <button id="back-to-inventory-btn" class="btn-primary">Volver al menu</button>
-            </div>
-            <button id="logout-from-cost-btn" class="grid-button">
-                <img src="images/logout.png" alt="Cerrar Sesión" width="30px" height="30px">
-                <br>
-                <span>Cerrar Sesión</span>
-            </button>
+<div id="cost-control-container" class="container hidden scrollable-container">
+    <div class="menu-bar">
+        <div class="left-menu">
+            <button id="back-to-inventory-btn" class="btn-primary">Volver al menu</button>
         </div>
-        
-        <h2>Control de Costos</h2>
-        
-        <div class="cost-filters">
-            <select id="cost-filter-colegio" class="form-control">
-                <option value="">Seleccionar Colegio</option>
+        <button id="logout-from-cost-btn" class="grid-button">
+            <img src="images/logout.png" alt="Cerrar Sesión" width="30px" height="30px">
+            <br>
+            <span>Cerrar Sesión</span>
+        </button>
+    </div> <br>
+    <h2>Control de Costos de Producción</h2>
+    
+    <div class="cost-input-form">
+        <h3>Costos por Producto</h3>
+        <div class="form-group">
+            <label>Producto:</label>
+            <select id="product-select" class="form-control">
+                <option value="">Seleccionar Producto</option>
+                <!-- Opciones de productos se llenarán dinámicamente -->
             </select>
-            <select id="cost-filter-tipo" class="form-control">
-                <option value="">Seleccionar Tipo</option>
-                <option value="Uniforme Diario">Uniforme Diario</option>
-                <option value="Uniforme Deportivo">Uniforme Deportivo</option>
-            </select>
-            <input type="month" id="cost-filter-month" class="form-control">
         </div>
-        
-        <div class="cost-control-panel">
-            <div class="cost-input-form">
-                <h3>Registrar Costo</h3>
-                <div class="form-group">
-                    <label>Colegio:</label>
-                    <select id="cost-colegio" class="form-control"></select>
-                </div>
-                <div class="form-group">
-                    <label>Tipo de Uniforme:</label>
-                    <select id="cost-tipo" class="form-control">
-                        <option value="Uniforme Diario">Uniforme Diario</option>
-                        <option value="Uniforme Deportivo">Uniforme Deportivo</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Mes y Año:</label>
-                    <input type="month" id="cost-month" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Costo Total:</label>
-                    <input type="number" id="cost-amount" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Descripción:</label>
-                    <textarea id="cost-description" class="form-control" rows="3"></textarea>
-                </div>
-                <button id="save-cost-btn" class="btn-primary">Guardar</button>
-            </div>
-            
-            <div class="cost-table">
-                <h3>Historial de Costos</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Colegio</th>
-                            <th>Tipo Uniforme</th>
-                            <th>Fecha</th>
-                            <th>Costo</th>
-                            <th>Descripción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="costs-body"></tbody>
-                </table>
-            </div>
+        <div class="form-group">
+            <label>Costo de Tela:</label>
+            <input type="number" id="cost-tela" class="form-control" placeholder="Ingrese el costo de la tela">
+        </div>
+        <div class="form-group">
+            <label>Costo de Hilo:</label>
+            <input type="number" id="cost-hilo" class="form-control" placeholder="Ingrese el costo del hilo">
+        </div>
+        <div class="form-group">
+            <label>Costo de Mano de Obra:</label>
+            <input type="number" id="cost-mano-obra" class="form-control" placeholder="Ingrese el costo de mano de obra">
         </div>
     </div>
+    <br>
+    <div class="cost-filters">
+        <h3>Costos Fijos y Variables</h3>
+        <br>
+        <div class="form-group">
+            <label>Costo Fijo:</label>
+            <input type="number" id="fixed-cost" class="form-control" placeholder="Ingrese el costo fijo">
+        </div>
+        <div class="form-group">
+            <label>Costo Variable:</label>
+            <input type="number" id="variable-cost" class="form-control" placeholder="Ingrese el costo variable">
+        </div>
+    </div>
+
+    <div class="cost-summary">
+        <h3>Resumen de Costos</h3>
+        <p>Total Costos de Producción: <span id="total-costs">0</span></p>
+        <div class="form-group">
+            <label>Precio de Venta:</label>
+            <input type="number" id="selling-price" class="form-control" placeholder="Ingrese el precio de venta">
+        </div>
+        <p>Rentabilidad: <span id="profitability">0</span></p>
+    </div>
+
+    <button id="save-cost-btn" class="btn-primary">Guardar Costos</button>
+</div>
     
 <!-- Modal para agregar producto -->
 <div id="add-product-modal" class="modal hidden">
@@ -254,6 +248,38 @@
     </div>
 </div>
 
+<!-- Modal para Detalles del Producto -->
+<div id="product-details-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Detalles del Producto</h2>
+        <div class="form-group">
+            <label>Producto:</label>
+            <span id="modal-product-name"></span>
+        </div>
+        <div class="form-group">
+            <label>Colegio:</label>
+            <span id="modal-colegio"></span>
+        </div>
+        <div class="form-group">
+            <label>Categoría:</label>
+            <span id="modal-categoria"></span>
+        </div>
+        <div class="form-group">
+            <label>Talla:</label>
+            <span id="modal-talla"></span>
+        </div>
+        <div class="form-group">
+            <label>Cantidad Actual:</label>
+            <span id="modal-cantidad"></span>
+        </div>
+        
+        <div class="modal-buttons">
+            <button id="open-update-modal" class="btn-primary">Actualizar Stock</button>
+            <button id="open-delete-modal" class="btn-tertiary">Eliminar Producto</button>
+            <button class="btn-secondary modal-close">Cerrar</button>
+        </div>
+    </div>
+</div>
 
 <!-- Modal para actualizar stock -->
 <div id="update-stock-modal" class="modal hidden">

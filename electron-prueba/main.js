@@ -692,3 +692,50 @@ ipcMain.handle('get-report-by-id', async (event, reportId) => {
         connection.end();
     }
 });
+
+
+
+ipcMain.handle('search-products', async (event, query) => {
+    const connection = createConnection();
+    try {
+        const [rows] = await new Promise((resolve, reject) => {
+            connection.query(
+                'SELECT * FROM inventory WHERE colegio LIKE ? OR prenda LIKE ?',
+                [`%${query}%`, `%${query}%`],
+                (error, results) => {
+                    if (error) reject(error);
+                    else resolve([results]);
+                }
+            );
+        });
+        return rows; // Devuelve los productos que coinciden con la búsqueda
+    } catch (error) {
+        console.error('Error searching products:', error);
+        return [];
+    } finally {
+        connection.end();
+    }
+});
+
+
+ipcMain.handle('get-product-details', async (event, { colegio, prenda, talla }) => {
+    const connection = createConnection();
+    try {
+        const [rows] = await new Promise((resolve, reject) => {
+            connection.query(
+                'SELECT * FROM inventory WHERE colegio = ? AND prenda = ? AND talla = ?',
+                [colegio, prenda, talla],
+                (error, results) => {
+                    if (error) reject(error);
+                    else resolve([results]);
+                }
+            );
+        });
+        return rows.length > 0 ? rows[0] : null; // Devuelve el primer producto encontrado
+    } catch (error) {
+        console.error('Error getting product details:', error);
+        return null;
+    } finally {
+        connection.end();
+    }
+});

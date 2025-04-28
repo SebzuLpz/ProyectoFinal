@@ -299,17 +299,13 @@ tr:hover {
     padding: 5px 10px;
     border-radius: 5px;
     cursor: pointer;
-    margin-left: 50px;
-    align-items: center;
-    position: fixed;
+    margin-left: 5px;
 }
 
 .delete-btn:hover {
     background-color: #8e1a26;
 }
 
-
-/* Add these to your styles.css file */
 
 .cost-filters {
     display: flex;
@@ -472,24 +468,6 @@ body {
     border-bottom: 1px solid #444;
 }   
 
-.suggestions {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    max-height: 150px;
-    overflow-y: auto;
-    position: absolute; /* Para que se superponga sobre otros elementos */
-    background-color: white; /* Fondo blanco para las sugerencias */
-    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
-}
-
-.suggestion-item {
-    padding: 8px;
-    cursor: pointer; /* Cambiar el cursor al pasar sobre las sugerencias */
-}
-
-.suggestion-item:hover {
-    background-color: #f0f0f0; /* Cambiar el fondo al pasar el mouse */
-}
 
 
 
@@ -533,3 +511,57 @@ span {
 
 }
 
+.search-bar {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.suggestions {
+    border: 1px solid #060606;
+    color: white;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    position: absolute; /* Para que se superponga sobre otros elementos */
+    background-color: rgb(59, 59, 59); /* Fondo blanco para las sugerencias */
+    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
+    width: 100%; /* Asegúrate de que la lista tenga el mismo ancho que el campo de búsqueda */
+}
+
+.suggestion-item {
+    padding: 8px;
+    cursor: pointer; /* Cambiar el cursor al pasar sobre las sugerencias */
+}
+
+.suggestion-item:hover {
+    background-color: #4c4c4c; /* Cambiar el fondo al pasar el mouse */
+}
+
+.hidden {
+    display: none;
+}
+
+.btn-tertiary {
+    background-color: #a10101;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-tertiary:hover {
+    background-color: #4d0101;
+}
+
+
+.update-btn {
+    background-color: #021325;
+    border: none;
+
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+
+}

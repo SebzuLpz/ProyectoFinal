@@ -211,22 +211,43 @@ function updateProductsTable(products) {
             <td>${product.categoria}</td>
             <td>${product.prenda}</td>
             <td>${product.talla}</td>
-            <td>${product.cantidad}${
-                isAdmin ? 
+            <td>${product.cantidad}</td>
+            <td>
+                <button class="update-btn" data-colegio="${product.colegio}" 
+                        data-categoria="${product.categoria}" 
+                        data-prenda="${product.prenda}" 
+                        data-talla="${product.talla}" 
+                        data-cantidad="${product.cantidad}">
+                    <img src="images/actualizar-producto.png" height="20px" width="20px" alt="Actualizar Producto">
+                </button>
+                ${isAdmin ? 
                 `<button class="delete-btn" data-id="${product.id}" 
                     data-colegio="${product.colegio}"
                     data-tipo="${product.categoria}"
                     data-prenda="${product.prenda}"
                     data-talla="${product.talla}">
-                    <img src="images/trash.png" height="15px" width="15px">
-                    </button>` : 
+                    <img src="images/trash.png" height="19px" width="19px" alt="Eliminar Producto">
+                </button>` : 
                 ''
-            }</td>
+                }
+            </td>
         `;
         tbody.appendChild(row);
     });
 
-    
+    // Añadir event listeners para los botones de actualizar
+    document.querySelectorAll('.update-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const colegio = btn.getAttribute('data-colegio');
+            const categoria = btn.getAttribute('data-categoria');
+            const prenda = btn.getAttribute('data-prenda');
+            const talla = btn.getAttribute('data-talla');
+            const cantidad = btn.getAttribute('data-cantidad');
+
+            // Llamar a la función para abrir el modal de actualización
+            openUpdateModal({ colegio, categoria, prenda, talla, cantidad });
+        });
+    });
 
     // Añadir event listeners para los botones de eliminar
     if (isAdmin) {
@@ -236,6 +257,18 @@ function updateProductsTable(products) {
     }
 }
 
+
+// Función para abrir el modal de actualización
+function openUpdateModal(product) {
+    document.getElementById('update-colegio').value = product.colegio;
+    document.getElementById('update-tipo').value = product.categoria;
+    document.getElementById('update-prenda').value = product.prenda;
+    document.getElementById('update-talla').value = product.talla;
+    document.getElementById('update-cantidad').value = product.cantidad; // Cantidad actual
+
+    // Mostrar el modal de actualización
+    document.getElementById('update-stock-modal').classList.remove('hidden');
+}
 
 
 
@@ -610,72 +643,24 @@ function updateCostsTable(costs) {
     });
 }
 
-// Event listener for save cost button
-saveCostBtn.addEventListener('click', async () => {
-    const costData = {
-        colegio: document.getElementById('cost-colegio').value,
-        tipoUniforme: document.getElementById('cost-tipo').value,
-        month: document.getElementById('cost-month').value,
-        amount: parseFloat(document.getElementById('cost-amount').value),
-        description: document.getElementById('cost-description').value
-    };
-    
-    if (!costData.colegio || !costData.tipoUniforme || !costData.month || isNaN(costData.amount)) {
-        showNotification('Por favor complete todos los campos correctamente');
-        return;
-    }
-    
-    try {
-        const response = await ipcRenderer.invoke('add-cost', costData);
-        if (response.success) {
-            showNotification(response.message);
-            
-            // Clear form
-            document.getElementById('cost-colegio').value = '';
-            document.getElementById('cost-tipo').value = 'Uniforme Diario';
-            document.getElementById('cost-month').value = '';
-            document.getElementById('cost-amount').value = '';
-            document.getElementById('cost-description').value = '';
-            
-            // Reload cost data
-            loadCostData();
-        } else {
-            showNotification(response.message);
-        }
-    } catch (error) {
-        console.error('Error adding cost:', error);
-        showNotification('Error al guardar el costo');
-    }
-});
+document.getElementById('save-cost-btn').addEventListener('click', () => {
+    const costTela = parseFloat(document.getElementById('cost-tela').value) || 0;
+    const costHilo = parseFloat(document.getElementById('cost-hilo').value) || 0;
+    const costManoObra = parseFloat(document.getElementById('cost-mano-obra').value) || 0;
+    const fixedCost = parseFloat(document.getElementById('fixed-cost').value) || 0;
+    const variableCost = parseFloat(document.getElementById('variable-cost').value) || 0;
+    const sellingPrice = parseFloat(document.getElementById('selling-price').value) || 0;
 
-// Event listeners for cost filters
-['cost-filter-colegio', 'cost-filter-tipo', 'cost-filter-month'].forEach(filterId => {
-    document.getElementById(filterId).addEventListener('change', async () => {
-        try {
-            const costs = await ipcRenderer.invoke('get-costs');
-            let filteredCosts = costs;
-            
-            const filters = {
-                colegio: document.getElementById('cost-filter-colegio').value,
-                tipo_uniforme: document.getElementById('cost-filter-tipo').value,
-                month: document.getElementById('cost-filter-month').value
-            };
-            
-            Object.keys(filters).forEach(key => {
-                if (filters[key]) {
-                    filteredCosts = filteredCosts.filter(cost => 
-                        cost[key] === filters[key]
-                    );
-                }
-            });
-            
-            updateCostsTable(filteredCosts);
-        } catch (error) {
-            console.error('Error filtering costs:', error);
-        }
-    });
-});
+    // Calcular costos de producción
+    const totalCosts = costTela + costHilo + costManoObra + fixedCost + variableCost;
+    document.getElementById('total-costs').textContent = totalCosts.toFixed(2);
 
+    // Calcular rentabilidad
+    const profitability = sellingPrice - totalCosts;
+    document.getElementById('profitability').textContent = profitability.toFixed(2);
+
+    // Aquí puedes agregar la lógica para guardar los costos en la base de datos
+});
 
 // Cerrar modales con la tecla "Esc"
 document.addEventListener('keydown', (event) => {
@@ -1106,3 +1091,157 @@ document.querySelectorAll('.modal-close').forEach(button => {
         modal.classList.add('hidden'); // Ocultar el modal
     });
 });
+
+
+const searchInput = document.getElementById('search-input');
+const suggestionsContainer = document.getElementById('suggestions-container');
+
+// Evento para manejar la entrada en el campo de búsqueda
+searchInput.addEventListener('input', async () => {
+    const query = searchInput.value.trim();
+    if (query.length > 0) {
+        // Llamar a la función para buscar productos
+        const results = await searchProducts(query);
+        displaySuggestions(results);
+    } else {
+        suggestionsContainer.innerHTML = ''; // Limpiar sugerencias si no hay entrada
+        suggestionsContainer.classList.add('hidden');
+    }
+});
+
+// Función para buscar productos en la base de datos
+async function searchProducts(query) {
+    // Aquí deberías implementar la lógica para buscar en la base de datos
+    // Por ejemplo, podrías hacer una llamada IPC a tu backend para obtener los productos
+    const response = await ipcRenderer.invoke('search-products', query);
+    return response; // Asegúrate de que esta función devuelva un array de productos
+}
+
+function displaySuggestions(products) {
+    suggestionsContainer.innerHTML = ''; // Limpiar sugerencias previas
+    if (products.length > 0) {
+        products.forEach(product => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'suggestion-item';
+            suggestionItem.textContent = `${product.colegio} - ${product.prenda}`;
+            suggestionItem.addEventListener('click', () => {
+                // Lógica para mostrar el modal con detalles del producto
+                showProductDetails(product);
+            });
+            suggestionsContainer.appendChild(suggestionItem);
+        });
+        suggestionsContainer.classList.remove('hidden'); // Mostrar la lista de sugerencias
+    } else {
+        suggestionsContainer.classList.add('hidden'); // Ocultar si no hay resultados
+    }
+}
+
+// Función para mostrar los detalles del producto en el modal
+function showProductDetails(product) {
+    document.getElementById('modal-product-name').textContent = product.prenda;
+    document.getElementById('modal-colegio').textContent = product.colegio;
+    document.getElementById('modal-categoria').textContent = product.categoria;
+    document.getElementById('modal-talla').textContent = product.talla;
+    document.getElementById('modal-cantidad').textContent = product.cantidad;
+
+    // Mostrar el modal
+    document.getElementById('product-details-modal').classList.remove('hidden');
+}
+
+// Cerrar el modal al hacer clic en el botón de cerrar
+document.querySelectorAll('.modal-close').forEach(button => {
+    button.addEventListener('click', () => {
+        const modal = button.closest('.modal');
+        modal.classList.add('hidden'); // Ocultar el modal
+    });
+});
+
+
+document.getElementById('save-stock-btn').addEventListener('click', async () => {
+    const colegio = document.getElementById('modal-colegio').textContent; // Obtener el colegio del modal
+    const categoria = document.getElementById('modal-categoria').textContent; // Obtener la categoría del modal
+    const prenda = document.getElementById('modal-product-name').textContent; // Obtener la prenda del modal
+    const talla = document.getElementById('modal-talla').textContent; // Obtener la talla del modal
+    const cantidadActual = parseInt(document.getElementById('modal-cantidad').textContent); // Obtener la cantidad actual
+    const nuevaCantidad = parseInt(document.getElementById('update-cantidad').value); // Obtener la nueva cantidad ingresada
+    const tipoMovimiento = document.querySelector('input[name="tipo-mov"]:checked').value; // Obtener el tipo de movimiento
+
+    // Verificar que todos los campos necesarios estén seleccionados
+    if (isNaN(nuevaCantidad) || nuevaCantidad < 0) {
+        showNotification('Por favor, ingrese una cantidad válida.');
+        return;
+    }
+
+    const updateData = {
+        colegio,
+        prenda,
+        cantidad: nuevaCantidad,
+        tipo: categoria, // Asumiendo que la categoría es necesaria
+        tipomov: tipoMovimiento,
+        talla,
+        isAdmin: true // O false, dependiendo de si es admin o no
+    };
+
+    try {
+        const response = await ipcRenderer.invoke('update-stock', updateData);
+        if (response.success) {
+            showNotification('Stock actualizado correctamente.');
+            document.getElementById('product-details-modal').classList.add('hidden'); // Cerrar el modal
+            await loadInventory(); // Recargar el inventario
+        } else {
+            showNotification(response.message);
+        }
+    } catch (error) {
+        console.error('Error updating stock:', error);
+        showNotification('Error al actualizar el stock.');
+    }
+});
+
+
+
+
+// Mostrar los detalles del producto en el modal
+function showProductDetails(product) {
+    document.getElementById('modal-product-name').textContent = product.prenda;
+    document.getElementById('modal-colegio').textContent = product.colegio;
+    document.getElementById('modal-categoria').textContent = product.categoria;
+    document.getElementById('modal-talla').textContent = product.talla;
+    document.getElementById('modal-cantidad').textContent = product.cantidad;
+
+    // Mostrar el modal
+    document.getElementById('product-details-modal').classList.remove('hidden');
+
+    // Agregar eventos a los botones
+    document.getElementById('open-update-modal').onclick = () => {
+        openUpdateModal(product); // Llama a la función para abrir el modal de actualización
+    };
+
+    document.getElementById('open-delete-modal').onclick = () => {
+        openDeleteModal(product); // Llama a la función para abrir el modal de eliminación
+    };
+}
+
+// Función para abrir el modal de actualización
+function openUpdateModal(product) {
+    // Aquí puedes llenar los campos del modal de actualización con los detalles del producto
+    document.getElementById('update-colegio').value = product.colegio;
+    document.getElementById('update-tipo').value = product.categoria;
+    document.getElementById('update-prenda').value = product.prenda;
+    document.getElementById('update-talla').value = product.talla;
+    document.getElementById('update-cantidad').value = product.cantidad; // Cantidad actual
+
+    // Mostrar el modal de actualización
+    document.getElementById('update-stock-modal').classList.remove('hidden');
+}
+
+// Función para abrir el modal de eliminación
+function openDeleteModal(product) {
+    // Mostrar detalles del producto en el modal de eliminación
+    document.getElementById('delete-colegio').textContent = product.colegio;
+    document.getElementById('delete-tipo').textContent = product.categoria;
+    document.getElementById('delete-prenda').textContent = product.prenda;
+    document.getElementById('delete-talla').textContent = product.talla;
+
+    // Mostrar el modal de confirmación de eliminación
+    document.getElementById('delete-confirm-modal').classList.remove('hidden');
+}
