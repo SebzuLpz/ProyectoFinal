@@ -491,15 +491,25 @@ ipcMain.handle('add-colegio', async (event, colegio) => {
     const connection = createConnection();
     
     try {
+        // Verificar si el colegio ya existe
+        const existingColegios = await new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM colegios WHERE nombre = ?', [colegio], (error, results) => {
+                if (error) reject(error);
+                else resolve(results);
+            });
+        });
+
+        // Si el colegio ya existe, retornar un mensaje de error
+        if (existingColegios.length > 0) {
+            return { success: false, message: 'El colegio ya existe' };
+        }
+
+        // Si no existe, agregar el nuevo colegio
         await new Promise((resolve, reject) => {
-            connection.query(
-                'INSERT INTO colegios (nombre) VALUES (?)',
-                [colegio],
-                (error) => {
-                    if (error) reject(error);
-                    else resolve();
-                }
-            );
+            connection.query('INSERT INTO colegios (nombre) VALUES (?)', [colegio], (error) => {
+                if (error) reject(error);
+                else resolve();
+            });
         });
         
         return { success: true, message: 'Colegio agregado exitosamente' };
@@ -510,6 +520,7 @@ ipcMain.handle('add-colegio', async (event, colegio) => {
         connection.end();
     }
 });
+
 
 ipcMain.handle('get-colegios', async () => {
     const connection = createConnection();
@@ -646,6 +657,8 @@ ipcMain.handle('generate-report-pdf', async (event, reportData) => {
     });
 });
 
+
+
 ipcMain.handle('get-report-by-id', async (event, reportId) => {
     const connection = createConnection();
     
@@ -667,10 +680,11 @@ ipcMain.handle('get-report-by-id', async (event, reportId) => {
 
         const report = reportRows[0];
 
-        // Obtener todos los movimientos de stock
+        // Obtener todos los movimientos de stock relacionados con el reporte
         const [movementRows] = await new Promise((resolve, reject) => {
             connection.query(
-                'SELECT * FROM stock_movements',
+                'SELECT * FROM stock_movements WHERE id = ?', // Asegúrate de que tengas una relación
+                [reportId],
                 (error, results) => {
                     if (error) reject(error);
                     else resolve([results]);
@@ -678,13 +692,7 @@ ipcMain.handle('get-report-by-id', async (event, reportId) => {
             );
         });
 
-        // Filtrar movimientos relacionados con el reporte
-        const relatedMovements = movementRows.filter(movement => {
-            
-            return movement.someField === report.someField; 
-        });
-
-        return { report, movements: relatedMovements }; 
+        return { report, movements: movementRows }; 
     } catch (error) {
         console.error('Error en get-report-by-id:', error);
         throw new Error('Error al obtener el reporte');
@@ -735,6 +743,92 @@ ipcMain.handle('get-product-details', async (event, { colegio, prenda, talla }) 
     } catch (error) {
         console.error('Error getting product details:', error);
         return null;
+    } finally {
+        connection.end();
+    }
+});
+
+
+
+
+
+const XLSX = require('xlsx');
+
+ipcMain.handle('generate-report-excel', async () => {
+    const connection = createConnection();
+    try {
+        // Obtener inventario
+        const inventory = await new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM inventory', (error, results) => {
+                if (error) {
+                    console.error('Error fetching inventory:', error);
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+
+        // Obtener movimientos de stock
+        const movements = await new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM stock_movements', (error, results) => {
+                if (error) {
+                    console.error('Error fetching movements:', error);
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+
+        // Crear un nuevo libro de trabajo
+        const workbook = XLSX.utils.book_new();
+
+        // Crear una hoja para el inventario
+        const inventorySheet = XLSX.utils.json_to_sheet(inventory);
+        XLSX.utils.book_append_sheet(workbook, inventorySheet, 'Inventario');
+
+        // Crear una hoja para los movimientos
+        const movementsSheet = XLSX.utils.json_to_sheet(movements);
+        XLSX.utils.book_append_sheet(workbook, movementsSheet, 'Movimientos');
+
+        // Guardar el archivo Excel
+        const reportPath = path.join(__dirname, 'reports', `report-${Date.now()}.xlsx`);
+        XLSX.writeFile(workbook, reportPath);
+
+        return { success: true, path: reportPath };
+    } catch (error) {
+        console.error('Error generando reporte:', error);
+        return { success: false, error: error.message };
+    } finally {
+        connection.end();
+    }
+});
+
+
+ipcMain.handle('delete-report', async (event, reportId) => {
+    const connection = createConnection();
+    
+    try {
+        await new Promise((resolve, reject) => {
+            connection.query(
+                'DELETE FROM reports WHERE id = ?',
+                [reportId],
+                (error, results) => {
+                    if (error) {
+                        console.error('Error al eliminar el reporte:', error);
+                        reject(error);
+                    } else {
+                        resolve(results);
+                    }
+                }
+            );
+        });
+        
+        return { success: true, message: 'Reporte eliminado exitosamente' };
+    } catch (error) {
+        console.error('Error deleting report:', error);
+        return { success: false, message: 'Error al eliminar el reporte' };
     } finally {
         connection.end();
     }

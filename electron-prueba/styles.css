@@ -9,11 +9,17 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #1a1a1a;
     color: #ffffff;
 }
+
 
 .container {
     padding: 20px;
@@ -565,3 +571,38 @@ span {
     cursor: pointer;
 
 }
+
+
+
+.search-bar {
+    position: relative; /* Para posicionar el botón dentro de la barra */
+}
+
+#clear-search-btn {
+    position: absolute;
+    right: 10px; /* Ajusta según sea necesario */
+    top: 50%;
+    transform: translateY(-50%); /* Centrar verticalmente */
+    background-color: transparent; /* Fondo transparente */
+    border: none; /* Sin borde */
+    color: white; /* Color del texto */
+    cursor: pointer; /* Cambiar cursor al pasar */
+}
+
+
+
+.btn-delete-report {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding-left: 10px;
+}
+
+.suggestions {
+    display: block; /* Cambia a block cuando quieras mostrar */
+}
+
+.hidden {
+    display: none; /* Oculta el contenedor */
+}
+

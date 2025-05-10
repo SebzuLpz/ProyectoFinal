@@ -54,10 +54,10 @@
             <br>
             <span>Gestión de Productos</span>
         </button>
-        <button id="add-colegio-btn" class="grid-button  hidden">
-            <img src="images/agregar-colegio.png" alt="Agregar Colegio">
+        <button id="open-colegios-btn" class="grid-button">
+            <img src="images/colegio.png" alt="Colegios">
             <br>
-            <span>Agregar Colegio</span>
+            <span>Colegios</span>
         </button>
         <button id="add-product-btn" class="grid-button  hidden">
             <img src="images/agregar-producto.png" alt="Agregar Producto">
@@ -74,9 +74,10 @@
             <img src="images/costos.png" alt="Control de Costos">
             <br>
             <span>Control de Costos</span>
+            <span>(Beta)</span>
         </button>
         <button id="reports-btn" class="grid-button">
-            <img src="images/reports.png" alt="Reportes">
+            <img src="images/info.png" alt="Reportes">
             <br>
             <span>Reportes</span>
         </button>
@@ -103,6 +104,7 @@
     <br>
     <div class="search-bar">
         <input type="text" id="search-input" class="form-control" placeholder="Buscar Colegio o Producto">
+        <button id="clear-search-btn" class="btn-secondary"><img src="images/delete.png" height="20px" width="20px"></button>
         <div id="suggestions-container" class="suggestions hidden"></div>
     </div>
     <div class="products-table">
@@ -121,6 +123,23 @@
     </div>
 </div>
 
+<div id="colegios-container" class="container hidden">
+    
+    <h2>Colegios</h2>
+    <br>
+    <button id="add-colegio-btn" class="grid-button hidden">
+        <img src="images/agregar-colegio.png" alt="Colegio">
+        <br>
+        <span>Agregar Colegio</span>
+    </button>
+</div>
+
+
+
+
+
+
+
 <div id="cost-control-container" class="container hidden scrollable-container">
     <div class="menu-bar">
         <div class="left-menu">
@@ -138,10 +157,10 @@
         <h3>Costos por Producto</h3>
         <div class="form-group">
             <label>Producto:</label>
-            <select id="product-select" class="form-control">
-                <option value="">Seleccionar Producto</option>
-                <!-- Opciones de productos se llenarán dinámicamente -->
-            </select>
+            <div class="search-bar">
+                <input type="text" id="search-input" class="form-control" placeholder="Buscar Producto">
+                
+            </div>
         </div>
         <div class="form-group">
             <label>Costo de Tela:</label>
@@ -405,10 +424,10 @@
 <!-- Modal para Detalles del Reporte -->
 <div id="report-details-modal" class="modal hidden">
     <div class="modal-content">
-        <h2>Detalles del Reporte</h2>
+        <h2>¿Descargar reporte?</h2>
         <div id="details-content" class="product-details"></div>
         <div class="modal-buttons">
-            <button id="download-report-btn" class="btn-primary">Descargar Reporte PDF</button>
+            <button id="download-report-btn" class="btn-primary">Descargar Reporte</button>
             <button class="btn-secondary modal-close">Cerrar</button>
         </div>
     </div>

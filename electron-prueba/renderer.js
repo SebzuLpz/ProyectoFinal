@@ -92,7 +92,7 @@ loginBtn.addEventListener('click', async (e) => {
 
             addProductBtn.classList.toggle('hidden', !isAdmin);
             document.getElementById('reports-btn').classList.toggle('hidden', !isAdmin);
-            document.getElementById('add-colegio-btn').classList.toggle('hidden', !isAdmin);
+            
             
             await loadInventory();
             await updateColegiosList();
@@ -813,7 +813,10 @@ async function loadReportHistory() {
                 <td>${report.total_items}</td>
                 <td>${report.items_added}</td>
                 <td>${report.items_removed}</td>
-                <td><button class="btn-view-report" data-id="${report.id}"><img src="images/info.png" height="40px" width="40px"></button></td>
+                <td>
+                    <button class="btn-view-report" data-id="${report.id}"><img src="images/reports.png" height="40px" width="40px"></button>
+                    <button class="btn-delete-report" data-id="${report.id}"><img src="images/delete.png" height="40px" width="40px"></button>
+                </td>
             `;
             tbody.appendChild(row);
         });
@@ -826,10 +829,25 @@ async function loadReportHistory() {
                 showReportDetails(report);
             });
         });
+
+        // Añadir event listeners para eliminar reportes
+        document.querySelectorAll('.btn-delete-report').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const reportId = btn.dataset.id; // Obtener el ID del reporte
+                const response = await ipcRenderer.invoke('delete-report', reportId);
+                if (response.success) {
+                    showNotification(response.message);
+                    await loadReportHistory(); // Recargar el historial de reportes
+                } else {
+                    showNotification(response.message);
+                }
+            });
+        });
     } catch (error) {
         console.error('Error cargando historial:', error);
     }
 }
+
 // Guardar configuración de día de reportes
 reportDaySelect.addEventListener('change', async () => {
     try {
@@ -1038,19 +1056,19 @@ backToMenu.addEventListener('click', async () =>{
 document.getElementById('download-report-btn').addEventListener('click', async () => {
     try {
         const reportData = await ipcRenderer.invoke('get-reports'); // Asegúrate de que esta función obtenga los datos necesarios
-        const response = await ipcRenderer.invoke('generate-report-pdf', reportData);
+        const response = await ipcRenderer.invoke('generate-report-excel', reportData);
         
         if (response.success) {
-            showNotification('Reporte PDF generado exitosamente. Puedes encontrarlo en la carpeta de reportes.');
+            showNotification('Reporte generado exitosamente. Puedes encontrarlo en la carpeta de reportes.');
             // Abre el archivo PDF generado
             const { shell } = require('electron');
             shell.openPath(response.path); // Abre el archivo PDF generado
         } else {
-            showNotification('Error al generar el reporte PDF.');
+            showNotification('Error al generar el reporte.');
         }
     } catch (error) {
         console.error('Error generating PDF:', error);
-        showNotification('Error al generar el reporte PDF.');
+        showNotification('Error al generar el reporte.');
     }
 });
 
@@ -1069,14 +1087,12 @@ function showReportDetails(reportData) {
     // Agregar detalles de los movimientos de stock
     if (reportData.movements.length === 0) {
         const noMovementsMessage = document.createElement('p');
-        noMovementsMessage.textContent = 'No hay movimientos de stock para este reporte.';
+        noMovementsMessage.textContent = 'El reporte se descargará como archivo Excel y se abrirá automaticamente';
         detailsContainer.appendChild(noMovementsMessage);
     } else {
-        reportData.movements.forEach(movement => {
             const detail = document.createElement('p');
-            detail.textContent = `Colegio: ${movement.colegio}, Producto: ${movement.prenda}, Talla: ${movement.talla}, Movimiento: ${movement.tipo}, Cantidad: ${movement.cantidad}, Realizado por: ${movement.isAdmin ? 'Admin' : 'Usuario'}`;
+            detail.textContent = `El reporte se descargará como archivo Excel y se abrirá automaticamente`;
             detailsContainer.appendChild(detail);
-        });
     }
 
     // Mostrar el modal
@@ -1111,14 +1127,34 @@ searchInput.addEventListener('input', async () => {
 
 // Función para buscar productos en la base de datos
 async function searchProducts(query) {
-    // Aquí deberías implementar la lógica para buscar en la base de datos
-    // Por ejemplo, podrías hacer una llamada IPC a tu backend para obtener los productos
-    const response = await ipcRenderer.invoke('search-products', query);
-    return response; // Asegúrate de que esta función devuelva un array de productos
+    try {
+        const response = await ipcRenderer.invoke('search-products', query);
+        return response; // Asegúrate de que esta función devuelva un array de productos
+    } catch (error) {
+        console.error('Error searching products:', error);
+        return []; // Devuelve un array vacío en caso de error
+    }
 }
 
+// Evento para manejar la entrada en el campo de búsqueda
+searchInput.addEventListener('input', async () => {
+    const query = searchInput.value.trim();
+    if (query.length > 0) {
+        // Llamar a la función para buscar productos
+        const results = await searchProducts(query);
+        displaySuggestions(results);
+    } else {
+        suggestionsContainer.innerHTML = ''; // Limpiar sugerencias si no hay entrada
+        suggestionsContainer.classList.add('hidden');
+    }
+});
+
+
+
 function displaySuggestions(products) {
+    const suggestionsContainer = document.getElementById('suggestions-container');
     suggestionsContainer.innerHTML = ''; // Limpiar sugerencias previas
+
     if (products.length > 0) {
         products.forEach(product => {
             const suggestionItem = document.createElement('div');
@@ -1127,6 +1163,7 @@ function displaySuggestions(products) {
             suggestionItem.addEventListener('click', () => {
                 // Lógica para mostrar el modal con detalles del producto
                 showProductDetails(product);
+                suggestionsContainer.classList.add('hidden'); // Ocultar sugerencias al seleccionar
             });
             suggestionsContainer.appendChild(suggestionItem);
         });
@@ -1135,6 +1172,25 @@ function displaySuggestions(products) {
         suggestionsContainer.classList.add('hidden'); // Ocultar si no hay resultados
     }
 }
+
+
+const searchBar = document.getElementById('search-input');
+
+
+// Evento para ocultar sugerencias al perder el foco
+searchBar.addEventListener('blur', () => {
+    setTimeout(() => {
+        suggestionsContainer.classList.add('hidden'); // Ocultar sugerencias
+    }); // Usar un timeout para permitir que el clic en la sugerencia se registre
+});
+
+searchBar.addEventListener('focus', () => {
+    if (suggestionsContainer.innerHTML !== '') {
+        suggestionsContainer.classList.remove('hidden'); // Mostrar sugerencias si hay
+    }
+});
+
+
 
 // Función para mostrar los detalles del producto en el modal
 function showProductDetails(product) {
@@ -1245,3 +1301,37 @@ function openDeleteModal(product) {
     // Mostrar el modal de confirmación de eliminación
     document.getElementById('delete-confirm-modal').classList.remove('hidden');
 }
+
+
+
+const openColegiosBtn = document.getElementById('open-colegios-btn');
+const colegiosContainer = document.getElementById('colegios-container');
+const backToMainBtncol = document.getElementById('back-to-menu-colegios');
+const logOutColegios = document.getElementById('logout-btn-colegios');
+
+// Evento para abrir la interfaz de colegios
+openColegiosBtn.addEventListener('click', () => {
+        console.log('Botón de colegios clickeado'); // Verifica si se activa
+        mainContainer.classList.add('hidden');
+        colegiosContainer.classList.remove('hidden');
+        document.getElementById('add-colegio-btn').classList.toggle('hidden', !isAdmin);
+});
+
+
+
+
+
+
+async function getInventory(connection) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT * FROM inventory', (error, results) => {
+            if (error) {
+                console.error('Error fetching inventory:', error);
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
+
